@@ -30,6 +30,14 @@ pipeline {
           post {
             success {
               archiveArtifacts artifacts: 'dist/*.exe', fingerprint: true
+              script {
+                // Optional: agents with DROP_DIR set also get a copy in a local folder.
+                if (env.DROP_DIR?.trim()) {
+                  def dest = "${env.DROP_DIR}\\${env.JOB_NAME.replace('/', '_')}-${env.BUILD_NUMBER}"
+                  powershell "New-Item -ItemType Directory -Force '${dest}' | Out-Null; Copy-Item dist\\*.exe '${dest}'"
+                  echo "Copied build to ${dest}"
+                }
+              }
             }
           }
         }

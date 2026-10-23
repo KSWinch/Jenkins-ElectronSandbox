@@ -8,7 +8,7 @@ jenkins:
     local:
       allowsSignup: false
       users:
-        - id: "admin"
+        - id: "${JENKINS_ADMIN_USER:-admin}"
           password: "${JENKINS_ADMIN_PASSWORD}"
   authorizationStrategy:
     loggedInUsersCanDoAnything:
@@ -23,6 +23,12 @@ jenkins:
         remoteFS: 'C:\jenkins-agent'
         launcher:
           inbound: {}
+        nodeProperties:
+          - envVars:
+              env:
+                # The Jenkinsfile copies finished builds here when set (see WINDOWS_DROP_DIR in .env).
+                - key: "DROP_DIR"
+                  value: "${WINDOWS_DROP_DIR:-}"
 
 unclassified:
   location:
@@ -69,5 +75,20 @@ jobs:
         }
         orphanedItemStrategy {
           discardOldItems { numToKeep(10) }
+        }
+      }
+  - script: >
+      pipelineJob('local-build') {
+        description('Runs the Jenkinsfile against the committed main branch of the project folder on this PC. Click Build Now.')
+        definition {
+          cpsScm {
+            scm {
+              git {
+                remote { url('git://localhost:9418/repo') }
+                branch('*/main')
+              }
+            }
+            scriptPath('Jenkinsfile')
+          }
         }
       }

@@ -9,9 +9,27 @@ services:
     ports:
       - "127.0.0.1:8080:8080"   # web UI
       - "127.0.0.1:50000:50000" # inbound agents (the Windows host)
+      - "127.0.0.1:9418:9418"   # git-daemon below, so the Windows agent can clone too
     volumes:
       - jenkins_home:/var/jenkins_home
       - /var/run/docker.sock:/var/run/docker.sock
+
+  # Serves this project's local git repo read-only at git://localhost:9418/repo, so the
+  # local-build job can run the Jenkinsfile without pushing to GitHub. Shares the jenkins
+  # container's network, so "localhost" means the same thing to Jenkins and the Windows host.
+  git-daemon:
+    image: alpine/git:2.47.2
+    container_name: jenkins-git-daemon
+    restart: unless-stopped
+    network_mode: "service:jenkins"
+    environment:
+      # The repo is owned by the Windows user, which git otherwise refuses to serve.
+      GIT_CONFIG_COUNT: "1"
+      GIT_CONFIG_KEY_0: safe.directory
+      GIT_CONFIG_VALUE_0: "*"
+    command: ["daemon", "--reuseaddr", "--export-all", "--base-path=/", "--verbose", "/repo"]
+    volumes:
+      - ../..:/repo:ro
 
 volumes:
   jenkins_home:
