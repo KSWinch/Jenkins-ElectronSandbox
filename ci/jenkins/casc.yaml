@@ -1,0 +1,73 @@
+# Jenkins configuration as code. ${VARS} come from ci/jenkins/.env via docker compose.
+jenkins:
+  systemMessage: "Local CI testbed for electron-cpp-testbed"
+  numExecutors: 2
+  # The controller runs the Linux stage itself (agent { dockerfile { label 'docker' } }).
+  labelString: "docker"
+  securityRealm:
+    local:
+      allowsSignup: false
+      users:
+        - id: "admin"
+          password: "${JENKINS_ADMIN_PASSWORD}"
+  authorizationStrategy:
+    loggedInUsersCanDoAnything:
+      allowAnonymousRead: false
+  slaveAgentPort: 50000
+  nodes:
+    # Placeholder for this Windows PC. Connect it with ci/jenkins/start-windows-agent.ps1.
+    - permanent:
+        name: "windows-host"
+        labelString: "windows"
+        numExecutors: 1
+        remoteFS: 'C:\jenkins-agent'
+        launcher:
+          inbound: {}
+
+unclassified:
+  location:
+    url: "http://localhost:8080/"
+
+credentials:
+  system:
+    domainCredentials:
+      - credentials:
+          - usernamePassword:
+              scope: GLOBAL
+              id: "github"
+              description: "GitHub token for repo scanning and PR status checks"
+              username: "${GITHUB_OWNER}"
+              password: "${GITHUB_TOKEN}"
+
+jobs:
+  - script: >
+      multibranchPipelineJob('electron-cpp-testbed') {
+        displayName('electron-cpp-testbed')
+        branchSources {
+          branchSource {
+            source {
+              github {
+                id('electron-cpp-testbed-github')
+                repoOwner('${GITHUB_OWNER}')
+                repository('${GITHUB_REPO}')
+                repositoryUrl('https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}')
+                configuredByUrl(true)
+                credentialsId('github')
+                traits {
+                  // 1 = skip branches that are also open as PRs, so each change builds once.
+                  gitHubBranchDiscovery { strategyId(1) }
+                  // 1 = build the PR merged with its target branch, like GitHub's merge would.
+                  gitHubPullRequestDiscovery { strategyId(1) }
+                }
+              }
+            }
+          }
+        }
+        // A local Jenkins can't receive GitHub webhooks, so poll GitHub for new pushes/PRs.
+        triggers {
+          periodicFolderTrigger { interval('1m') }
+        }
+        orphanedItemStrategy {
+          discardOldItems { numToKeep(10) }
+        }
+      }

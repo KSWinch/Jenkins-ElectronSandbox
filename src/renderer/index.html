@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'">
+  <title>C++ Testbed</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 24px; background: #1e1e1e; color: #ddd; }
+    button { margin: 4px 4px 4px 0; padding: 6px 12px; }
+    input { width: 80px; padding: 4px; }
+    pre { background: #111; padding: 12px; border-radius: 4px; min-height: 120px; white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+  <h1>Electron + C++ Testbed</h1>
+  <div>
+    <button id="ping">Ping</button>
+    <button id="version">Version</button>
+    <button id="sysinfo">Sysinfo</button>
+  </div>
+  <div>
+    <input id="a" type="number" value="2"> + <input id="b" type="number" value="3">
+    <button id="add">Add</button>
+  </div>
+  <pre id="log"></pre>
+  <script src="renderer.js"></script>
+</body>
+</html>

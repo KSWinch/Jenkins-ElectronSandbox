@@ -1,0 +1,61 @@
+{
+  "name": "electron-cpp-testbed",
+  "version": "0.1.0",
+  "description": "Electron app with a C++ backend, used as a CI/packaging test bed",
+  "main": "src/main.js",
+  "private": true,
+  "engines": {
+    "node": ">=22.12"
+  },
+  "scripts": {
+    "build:backend": "cmake -S backend -B backend/build -G Ninja -DCMAKE_BUILD_TYPE=Release && cmake --build backend/build",
+    "test:backend": "ctest --test-dir backend/build --output-on-failure",
+    "test:smoke": "node scripts/smoke-test.js",
+    "test": "npm run test:backend && npm run test:smoke",
+    "start": "npm run build:backend && electron .",
+    "package": "electron-builder --publish never",
+    "dist": "npm run build:backend && npm test && npm run package"
+  },
+  "build": {
+    "appId": "com.example.electroncpptestbed",
+    "productName": "CppTestbed",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "src/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "backend/build",
+        "to": "backend",
+        "filter": [
+          "backend",
+          "backend.exe"
+        ]
+      }
+    ],
+    "win": {
+      "target": [
+        "portable"
+      ]
+    },
+    "portable": {
+      "artifactName": "${productName}-${version}-portable.exe"
+    },
+    "linux": {
+      "target": [
+        "AppImage"
+      ],
+      "category": "Development"
+    },
+    "appImage": {
+      "artifactName": "${productName}-${version}-${arch}.AppImage"
+    }
+  },
+  "devDependencies": {
+    "electron": "^45.0.0",
+    "electron-builder": "^26.15.3"
+  }
+}
