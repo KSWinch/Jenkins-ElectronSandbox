@@ -64,3 +64,8 @@ the GitHub credential, and a `windows-host` agent slot.
 
 A local Jenkins can't receive GitHub webhooks, so the job checks GitHub every minute instead.
 Pass/fail shows up as a status check on the PR.
+
+To test without GitHub, run the **local-build** job (**Build Now**). It builds the last commit on
+`main` in this folder, served by the `git-daemon` container, so commit your changes first. If
+`WINDOWS_DROP_DIR` is set in `.env`, each successful Windows build is also copied there as
+`<job>-<build number>\CppTestbed-<version>-portable.exe`.
