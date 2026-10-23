@@ -18,7 +18,10 @@ services:
   # local-build job can run the Jenkinsfile without pushing to GitHub. Shares the jenkins
   # container's network, so "localhost" means the same thing to Jenkins and the Windows host.
   git-daemon:
-    image: alpine/git:2.47.2
+    build:
+      dockerfile_inline: |
+        FROM alpine:3.20
+        RUN apk add --no-cache git-daemon
     container_name: jenkins-git-daemon
     restart: unless-stopped
     network_mode: "service:jenkins"
@@ -27,9 +30,9 @@ services:
       GIT_CONFIG_COUNT: "1"
       GIT_CONFIG_KEY_0: safe.directory
       GIT_CONFIG_VALUE_0: "*"
-    command: ["daemon", "--reuseaddr", "--export-all", "--base-path=/", "--verbose", "/repo"]
+    command: ["git", "daemon", "--reuseaddr", "--export-all", "--base-path=/srv/git", "--verbose"]
     volumes:
-      - ../..:/repo:ro
+      - ../..:/srv/git/repo:ro
 
 volumes:
   jenkins_home:
