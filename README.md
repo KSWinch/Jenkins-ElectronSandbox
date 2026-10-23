@@ -50,3 +50,17 @@ Node 22.12+, CMake 3.16+, Ninja, and a C++17 compiler (MinGW g++ or MSVC on Wind
 5. A dev downloads the `.exe` / `.AppImage` from **Build Artifacts** on the PR's build page.
 
 If you only have one kind of agent, delete the other stage in the `Jenkinsfile`.
+
+### Local Jenkins for trying it out
+
+`ci/jenkins/` runs a throwaway Jenkins in Docker. It comes preconfigured with the PR job,
+the GitHub credential, and a `windows-host` agent slot.
+
+1. Copy `ci/jenkins/.env.example` to `ci/jenkins/.env` and fill it in (it's git-ignored).
+2. `docker compose -f ci/jenkins/docker-compose.yml up -d --build`, then open http://localhost:8080.
+3. To run the Windows stage, connect this PC as the agent:
+   `powershell -File ci/jenkins/start-windows-agent.ps1`. This needs Java 17+, plus Node 22.12+,
+   CMake, Ninja and g++ on PATH.
+
+A local Jenkins can't receive GitHub webhooks, so the job checks GitHub every minute instead.
+Pass/fail shows up as a status check on the PR.
