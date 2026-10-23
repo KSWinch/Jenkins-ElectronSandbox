@@ -18,8 +18,10 @@ $jar = Join-Path $WorkDir 'agent.jar'
 Invoke-WebRequest "$JenkinsUrl/jnlpJars/agent.jar" -OutFile $jar
 
 $auth = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes("${User}:${Password}"))
-$jnlp = [xml](Invoke-WebRequest "$JenkinsUrl/computer/windows-host/jenkins-agent.jnlp" `
+$content = (Invoke-WebRequest "$JenkinsUrl/computer/windows-host/jenkins-agent.jnlp" `
   -Headers @{ Authorization = "Basic $auth" } -UseBasicParsing).Content
-$secret = $jnlp.jnlp.'application-desc'.argument[0]
+# Windows PowerShell returns this content type as raw bytes rather than a string.
+if ($content -is [byte[]]) { $content = [Text.Encoding]::UTF8.GetString($content) }
+$secret = ([xml]$content).jnlp.'application-desc'.argument[0]
 
 java -jar $jar -url $JenkinsUrl -secret $secret -name windows-host -workDir $WorkDir
